@@ -1,0 +1,166 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+    - go test -race -timeout 60s ./...
+
+builds:
+  - id: sigil-device
+    binary: sigil-device
+    main: ./cmd/sigil-device
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+
+archives:
+  - id: sigil-device
+    format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - CONTRIBUTING.md
+      - docs/man/sigil-device.1
+      - completions/*
+      - packaging/systemd/sigil-device.service
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+nfpms:
+  - id: sigil-device
+    package_name: sigil-device
+    vendor: Wagmi Labs Pty Ltd
+    homepage: https://sigilauth.com
+    maintainer: Sigil Auth <noreply@sigilauth.com>
+    description: |
+      PKI-based authentication CLI device for Sigil Auth.
+      Hardware-backed ECDSA keys, push notifications, multi-party authorization.
+    license: AGPL-3.0
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    bindir: /usr/bin
+    contents:
+      - src: LICENSE
+        dst: /usr/share/doc/sigil-device/LICENSE
+      - src: README.md
+        dst: /usr/share/doc/sigil-device/README.md
+      - src: packaging/systemd/sigil-device.service
+        dst: /usr/lib/systemd/user/sigil-device.service
+      - src: docs/man/sigil-device.1
+        dst: /usr/share/man/man1/sigil-device.1
+      - src: completions/sigil-device.bash
+        dst: /usr/share/bash-completion/completions/sigil-device
+      - src: completions/sigil-device.zsh
+        dst: /usr/share/zsh/site-functions/_sigil-device
+      - src: completions/sigil-device.fish
+        dst: /usr/share/fish/vendor_completions.d/sigil-device.fish
+
+brews:
+  - repository:
+      owner: sigilauth
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://sigilauth.com
+    description: PKI-based authentication CLI device for Sigil Auth
+    license: AGPL-3.0
+    install: |
+      bin.install "sigil-device"
+      man1.install "docs/man/sigil-device.1"
+      bash_completion.install "completions/sigil-device.bash" => "sigil-device"
+      zsh_completion.install "completions/sigil-device.zsh" => "_sigil-device"
+      fish_completion.install "completions/sigil-device.fish"
+    test: |
+      system "#{bin}/sigil-device", "--version"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+
+release:
+  github:
+    owner: sigilauth
+    name: cli-device
+  draft: false
+  prerelease: auto
+  mode: replace
+  header: |
+    ## Sigil CLI Device {{ .Tag }}
+
+    PKI-based authentication testing device for Sigil Auth.
+  footer: |
+    ## Installation
+
+    ### Linux Package Managers
+
+    **Debian/Ubuntu (.deb):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device_{{ .Version }}_linux_amd64.deb
+    sudo dpkg -i sigil-device_{{ .Version }}_linux_amd64.deb
+    ```
+
+    **Fedora/RHEL (.rpm):**
+    ```bash
+    sudo rpm -i https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device-{{ .Version }}-1.x86_64.rpm
+    ```
+
+    **Arch Linux (AUR):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device-{{ .Version }}-1-x86_64.pkg.tar.zst
+    sudo pacman -U sigil-device-{{ .Version }}-1-x86_64.pkg.tar.zst
+    ```
+
+    **Alpine (.apk):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device_{{ .Version }}_linux_amd64.apk
+    sudo apk add --allow-untrusted sigil-device_{{ .Version }}_linux_amd64.apk
+    ```
+
+    ### Homebrew (macOS / Linux)
+
+    ```bash
+    brew install sigilauth/tap/sigil-device
+    ```
+
+    ### Manual Download
+
+    **Linux/macOS:**
+    ```bash
+    tar -xzf sigil-device_{{ .Version }}_linux_amd64.tar.gz
+    sudo mv sigil-device /usr/local/bin/
+    ```
+
+    **Windows:**
+    ```powershell
+    unzip sigil-device_{{ .Version }}_windows_amd64.zip
+    .\sigil-device.exe --version
+    ```
+
+    ### Go Install
+
+    ```bash
+    go install github.com/sigilauth/cli-device/cmd/sigil-device@{{ .Tag }}
+    ```

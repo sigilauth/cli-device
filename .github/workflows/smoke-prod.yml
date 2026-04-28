@@ -1,0 +1,47 @@
+name: Smoke Test (PROD)
+
+on:
+  schedule:
+    # Every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+
+      - name: Build
+        run: go build -o sigil-device ./cmd/sigil-device
+
+      - name: Initialize device
+        run: ./sigil-device init
+
+      - name: Verify device identity
+        run: ./sigil-device whoami
+
+      - name: Test WebSocket connection to PROD relay
+        run: |
+          timeout 30s ./sigil-device listen --relay wss://relay.sigilauth.com || true
+
+      - name: Verify state file exists
+        run: test -f ~/.sigil-device/state.json
+
+      - name: Report success
+        if: success()
+        run: echo "✓ PROD relay smoke test passed"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "✗ PROD relay smoke test failed"
+          exit 1

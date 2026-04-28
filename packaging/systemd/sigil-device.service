@@ -1,0 +1,28 @@
+[Unit]
+Description=Sigil Auth CLI Device Listener
+Documentation=man:sigil-device(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/sigil-device listen --auto-approve
+Restart=on-failure
+RestartSec=10s
+
+# Security hardening
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+
+# Allow access to user config directory
+ReadWritePaths=%h/.sigil-device
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sigil-device
+
+[Install]
+WantedBy=default.target

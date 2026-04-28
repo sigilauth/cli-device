@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Pictogram Derivation Test Vectors",
+  "description": "Test vectors for pictogram derivation from fingerprint per protocol-spec §3.6",
+  "vectors": [
+    {
+      "name": "Example from protocol-spec §11.4",
+      "fingerprint_hex": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+      "first_4_bytes_hex": "a1b2c3d4",
+      "first_4_bytes_decimal": 2712879060,
+      "first_4_bytes_binary": "10100001101100101100001111010100",
+      "bit_extraction": {
+        "comment": "Extract 5 x 6-bit indices from first 30 bits",
+        "bits_0_5": "101000",
+        "bits_6_11": "011011",
+        "bits_12_17": "001011",
+        "bits_18_23": "000011",
+        "bits_24_29": "110101"
+      },
+      "indices": [40, 27, 11, 3, 53],
+      "expected_pictogram": ["tree", "rocket", "mushroom", "orange", "moai"],
+      "expected_pictogram_speakable": "tree rocket mushroom orange moai"
+    },
+    {
+      "name": "All zeros fingerprint",
+      "fingerprint_hex": "0000000000000000000000000000000000000000000000000000000000000000",
+      "first_4_bytes_hex": "00000000",
+      "indices": [0, 0, 0, 0, 0],
+      "expected_pictogram": ["apple", "apple", "apple", "apple", "apple"],
+      "expected_pictogram_speakable": "apple apple apple apple apple"
+    },
+    {
+      "name": "All 0xFF fingerprint (max indices)",
+      "fingerprint_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+      "first_4_bytes_hex": "ffffffff",
+      "first_4_bytes_binary": "11111111111111111111111111111111",
+      "indices": [63, 63, 63, 63, 63],
+      "expected_pictogram": ["fire", "fire", "fire", "fire", "fire"],
+      "expected_pictogram_speakable": "fire fire fire fire fire"
+    },
+    {
+      "name": "Repeating pattern test",
+      "fingerprint_hex": "041041041000000000000000000000000000000000000000000000000000000000",
+      "first_4_bytes_hex": "04104104",
+      "first_4_bytes_binary": "00000100000100000100000100000100",
+      "comment": "Pattern 0x04104104 extracts to all 1s via shifts 26/20/14/8/2",
+      "indices": [1, 1, 1, 1, 1],
+      "expected_pictogram": ["banana", "banana", "banana", "banana", "banana"],
+      "expected_pictogram_speakable": "banana banana banana banana banana"
+    }
+  ],
+  "emoji_list": [
+    "apple", "banana", "grapes", "orange", "lemon", "cherry", "strawberry", "kiwi",
+    "carrot", "corn", "broccoli", "mushroom", "pepper", "avocado", "onion", "peanut",
+    "pizza", "burger", "taco", "donut", "cookie", "cake", "cupcake", "popcorn",
+    "car", "taxi", "bus", "rocket", "plane", "helicopter", "sailboat", "bicycle",
+    "dog", "cat", "fish", "butterfly", "bee", "fox", "lion", "elephant",
+    "tree", "sunflower", "cactus", "clover", "blossom", "rainbow", "star", "moon",
+    "house", "mountain", "peak", "volcano", "island", "moai", "tent", "castle",
+    "key", "bell", "books", "guitar", "anchor", "crown", "diamond", "fire"
+  ]
+}

@@ -1,0 +1,14 @@
+pkgbase = sigil-device
+	pkgdesc = CLI-based testing device for Sigil Auth — PKI-based strong authentication
+	pkgver = 0.1.0
+	pkgrel = 1
+	url = https://sigilauth.com
+	arch = x86_64
+	arch = aarch64
+	license = AGPL3
+	makedepends = go
+	makedepends = git
+	source = sigil-device-0.1.0.tar.gz::https://github.com/sigilauth/cli-device/archive/v0.1.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = sigil-device

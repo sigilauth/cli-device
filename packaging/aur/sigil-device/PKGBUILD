@@ -1,0 +1,54 @@
+# Maintainer: Wagmi Labs <noreply@sigilauth.com>
+
+pkgname=sigil-device
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="CLI-based testing device for Sigil Auth — PKI-based strong authentication"
+arch=('x86_64' 'aarch64')
+url="https://sigilauth.com"
+license=('AGPL3')
+depends=()
+makedepends=('go' 'git')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/sigilauth/cli-device/archive/v${pkgver}.tar.gz")
+sha256sums=('SKIP')  # Update with actual checksum after first release
+
+prepare() {
+    cd "${pkgname}-${pkgver}"
+    mkdir -p build
+}
+
+build() {
+    cd "${pkgname}-${pkgver}"
+    export CGO_ENABLED=0
+    export GOFLAGS="-buildmode=pie -trimpath -mod=readonly -modcacherw"
+    go build -ldflags="-s -w -X main.version=${pkgver}" -o build/sigil-device ./cmd/sigil-device
+}
+
+check() {
+    cd "${pkgname}-${pkgver}"
+    go test -race -timeout 60s ./...
+}
+
+package() {
+    cd "${pkgname}-${pkgver}"
+
+    # Install binary
+    install -Dm755 build/sigil-device "${pkgdir}/usr/bin/sigil-device"
+
+    # Install man page
+    install -Dm644 docs/man/sigil-device.1 "${pkgdir}/usr/share/man/man1/sigil-device.1"
+
+    # Install shell completions
+    install -Dm644 completions/sigil-device.bash "${pkgdir}/usr/share/bash-completion/completions/sigil-device"
+    install -Dm644 completions/sigil-device.zsh "${pkgdir}/usr/share/zsh/site-functions/_sigil-device"
+    install -Dm644 completions/sigil-device.fish "${pkgdir}/usr/share/fish/vendor_completions.d/sigil-device.fish"
+
+    # Install systemd user service
+    install -Dm644 packaging/systemd/sigil-device.service "${pkgdir}/usr/lib/systemd/user/sigil-device.service"
+
+    # Install documentation
+    install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}
+
+# vim:set ts=4 sw=4 et:

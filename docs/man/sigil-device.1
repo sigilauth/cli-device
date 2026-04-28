@@ -1,0 +1,118 @@
+.TH SIGIL-DEVICE 1 "April 2026" "sigil-device 0.1.0" "User Commands"
+.SH NAME
+sigil-device \- CLI-based testing device for Sigil Auth
+.SH SYNOPSIS
+.B sigil-device
+[\fIcommand\fR] [\fIoptions\fR]
+.SH DESCRIPTION
+.B sigil-device
+is a command-line tool that simulates a Sigil Auth device for testing and automation. It generates ECDSA P-256 keypairs, registers with Sigil servers, and handles authentication challenges via WebSocket.
+
+Use cases include automated E2E testing, local development without mobile app, headless CI/CD authentication, and desktop client functionality.
+.SH COMMANDS
+.TP
+.B init
+Generate a new BIP39 mnemonic and derive ECDSA P-256 keypair. Stores state in ~/.sigil-device/state.json and mnemonic in ~/.sigil-device/mnemonic.txt.
+.TP
+.B pair \-\-server \fIURL\fR
+Register device public key with a Sigil server.
+.IP
+Example: sigil-device pair --server https://sigil.example.com:8443
+.TP
+.B register \-\-relay \fIURL\fR
+Register device fingerprint with the push relay for WebSocket delivery.
+.IP
+Example: sigil-device register --relay https://relay.sigilauth.com
+.TP
+.B listen \-\-relay \fIURL\fR [\-\-auto-approve]
+Listen for incoming challenges via WebSocket. Use --auto-approve for automated testing (no interactive prompts).
+.IP
+Example: sigil-device listen --relay https://relay.sigilauth.com --auto-approve
+.TP
+.B respond \fIchallenge-id\fR \-\-server \fIURL\fR
+Manually fetch and respond to a specific challenge.
+.IP
+Example: sigil-device respond abc123 --server https://sigil.example.com:8443
+.TP
+.B mpa-respond \fIrequest-id\fR \-\-server \fIURL\fR
+Respond to a multi-party authorization request.
+.IP
+Example: sigil-device mpa-respond req456 --server https://sigil.example.com:8443
+.TP
+.B decrypt \fIdecrypt-id\fR \-\-server \fIURL\fR
+Decrypt and return data encrypted to the device's public key.
+.IP
+Example: sigil-device decrypt dec789 --server https://sigil.example.com:8443
+.TP
+.B whoami
+Display device fingerprint and identity information.
+.TP
+.B unpair \-\-server \fIURL\fR
+Deregister from server and clear pairing state.
+.SH FILES
+.TP
+.I ~/.sigil-device/state.json
+Device keypair, server info, relay URL (permissions: 0600)
+.TP
+.I ~/.sigil-device/mnemonic.txt
+BIP39 mnemonic backup (permissions: 0600)
+.SH SECURITY
+.IP \(bu 2
+Private keys never leave ~/.sigil-device/state.json
+.IP \(bu 2
+All files created with 0600 permissions (owner read/write only)
+.IP \(bu 2
+Mnemonic stored separately for backup purposes
+.IP \(bu 2
+TLS verification mandatory (no opt-out)
+.IP \(bu 2
+Signature verification on all server messages
+.SH SYSTEMD INTEGRATION
+To run sigil-device as a background listener daemon:
+.PP
+.nf
+.RS
+systemctl --user enable sigil-device.service
+systemctl --user start sigil-device.service
+systemctl --user status sigil-device.service
+.RE
+.fi
+.PP
+The service runs \fBsigil-device listen --auto-approve\fR and automatically restarts on failure.
+.SH EXAMPLES
+.TP
+.B Quick start (interactive):
+.nf
+.RS
+sigil-device init
+sigil-device pair --server https://sigil.example.com:8443
+sigil-device register --relay https://relay.sigilauth.com
+sigil-device listen --relay https://relay.sigilauth.com
+.RE
+.fi
+.TP
+.B CI/CD automation:
+.nf
+.RS
+sigil-device init
+sigil-device pair --server https://ci.example.com:8443
+sigil-device listen --relay https://relay.sigilauth.com --auto-approve &
+# Run tests that trigger authentication challenges
+kill %1
+.RE
+.fi
+.SH EXIT STATUS
+.TP
+.B 0
+Success
+.TP
+.B 1
+General error (invalid arguments, network failure, crypto error)
+.SH BUGS
+Report bugs at: https://github.com/sigilauth/cli-device/issues
+.SH LICENSE
+AGPL-3.0 - See https://github.com/sigilauth/cli-device/blob/main/LICENSE
+.SH SEE ALSO
+Full documentation: https://sigilauth.com/docs/cli-device
+.PP
+Sigil Auth protocol: https://sigilauth.com/docs/protocol

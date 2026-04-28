@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Domain Separation Test Vectors - Authentication (V1 with action_context binding)",
+  "description": "RFC 6979 deterministic ECDSA signatures with SIGIL-AUTH-V1 domain tag and action_context cryptographic binding",
+  "curve": "P-256 (secp256r1)",
+  "signature_format": "Fixed 64-byte (r || s), low-S normalized per BIP-62",
+  "domain_tag": "SIGIL-AUTH-V1\\x00",
+  "domain_tag_hex": "5349474c2d415554482d563100",
+  "signed_payload": "tag || challenge_bytes || SHA256(canonical_json(action_context))",
+  "canonical_json_spec": "RFC 8785 - sorted keys, no whitespace, minimal encoding",
+  "vectors": [
+    {
+      "name": "Authentication with action_context",
+      "description": "Server/Device signs challenge + action_context hash with auth domain tag",
+      "private_key_hex": "c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721",
+      "public_key_compressed_hex": "0360fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb6",
+      "domain_tag": "SIGIL-AUTH-V1\\x00",
+      "challenge_bytes_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "challenge_bytes_description": "32 random bytes",
+      "action_context_json": {
+        "type": "engine_login",
+        "description": "Sign in to Engine Management",
+        "user_id": "alice"
+      },
+      "action_context_canonical": "{\"description\":\"Sign in to Engine Management\",\"type\":\"engine_login\",\"user_id\":\"alice\"}",
+      "action_context_canonical_hex": "7b226465736372697074696f6e223a225369676e20696e20746f20456e67696e65204d616e6167656d656e74222c2274797065223a22656e67696e655f6c6f67696e222c22757365725f6964223a22616c696365227d",
+      "action_context_hash_hex": "ae4c8d04ee09905ce0fbf5dd11c8733e92508ab00301b19d8e9da8f28b49b620",
+      "message_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefae4c8d04ee09905ce0fbf5dd11c8733e92508ab00301b19d8e9da8f28b49b620",
+      "message_description": "challenge_bytes (32) || action_hash (32) = 64 bytes",
+      "tagged_input_hex": "534947494c2d415554482d5631000123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefae4c8d04ee09905ce0fbf5dd11c8733e92508ab00301b19d8e9da8f28b49b620",
+      "expected_signature_hex": "1500ac510b6b2cd7ed7400542d10ecf500a36e6f402b2f122afc15b8988e27c03a10c9d47aebcda59893507d3ad5bb75dd0fe5b94cecbbbb27c2522847cb1f02",
+      "verification": "Both server and device sign the same challenge_bytes + action_hash"
+    },
+    {
+      "name": "Authentication with empty action_context",
+      "description": "Challenge with no action context - uses empty object {}",
+      "private_key_hex": "c9afa9d845ba75166b5c215767b1d6934e50c3db36e89b127b8a622b120f6721",
+      "public_key_compressed_hex": "0360fed4ba255a9d31c961eb74c6356d68c049b8923b61fa6ce669622e60f29fb6",
+      "domain_tag": "SIGIL-AUTH-V1\\x00",
+      "challenge_bytes_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "action_context_canonical": "{}",
+      "action_context_canonical_hex": "7b7d",
+      "action_context_hash_hex": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "message_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "message_description": "challenge_bytes (32) || SHA256('{}') (32)",
+      "tagged_input_hex": "534947494c2d415554482d5631000123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "expected_signature_hex": "c8c48552aea9b31d6e1b14228598fc5db9c2ef23e31573c8957d96fc966347e4491183144065153ca605f0572fb655b54da99a92f7b7468ab22276e4ad36a6ea",
+      "verification": "Empty action_context is canonical '{}', fixed SHA256 hash"
+    }
+  ],
+  "invalid_cases": [
+    {
+      "name": "Wrong domain tag (MPA tag used for auth)",
+      "challenge_bytes_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "action_context_canonical": "{\"description\":\"Sign in to Engine Management\",\"type\":\"engine_login\",\"user_id\":\"alice\"}",
+      "domain_tag": "SIGIL-MPA-V1\\x00",
+      "expected_result": "reject",
+      "reason": "Signature produced with SIGIL-MPA-V1 will not verify against SIGIL-AUTH-V1"
+    },
+    {
+      "name": "Action_context substitution after signing",
+      "challenge_bytes_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "signed_action": "{\"description\":\"Sign in to Engine Management\",\"type\":\"engine_login\",\"user_id\":\"alice\"}",
+      "substituted_action": "{\"type\":\"engine_login\",\"description\":\"Delete all data\",\"user_id\":\"alice\"}",
+      "expected_result": "reject",
+      "reason": "Different action_context produces different hash, signature fails verification"
+    },
+    {
+      "name": "Non-canonical JSON (whitespace variation)",
+      "challenge_bytes_hex": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      "action_context_non_canonical": "{\"type\": \"engine_login\", \"user_id\": \"alice\", \"description\": \"Sign in to Engine Management\"}",
+      "expected_result": "reject",
+      "reason": "Different byte representation (whitespace, key order) produces different hash"
+    }
+  ],
+  "empty_action_context_hash": {
+    "canonical_json": "{}",
+    "canonical_hex": "7b7d",
+    "sha256_hex": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "note": "This is the fixed hash value for empty action_context, used when integrator provides no action"
+  }
+}

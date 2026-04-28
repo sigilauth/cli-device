@@ -1,0 +1,34 @@
+app-id: com.wagmilabs.SigilDevice
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+command: sigil-device
+
+finish-args:
+  - --share=network
+  - --filesystem=xdg-config/sigil:create
+  - --filesystem=xdg-data/sigil:create
+  - --talk-name=org.freedesktop.secrets
+
+build-options:
+  append-path: /usr/lib/sdk/golang/bin
+  env:
+    GOBIN: /app/bin
+    GOROOT: /usr/lib/sdk/golang
+
+modules:
+  - name: sigil-device
+    buildsystem: simple
+    build-commands:
+      - |
+        . /usr/lib/sdk/golang/enable.sh
+        go build -o sigil-device -ldflags="-s -w -X main.version=${FLATPAK_BUILDER_BUILD_VERSION}" ./cmd/sigil-device
+        install -Dm755 sigil-device /app/bin/sigil-device
+        install -Dm644 LICENSE /app/share/licenses/sigil-device/LICENSE
+    sources:
+      - type: git
+        url: https://github.com/sigilauth/cli-device.git
+        tag: v0.1.0
+        commit: HEAD

@@ -1,0 +1,290 @@
+version: 2
+project_name: cli-device
+release:
+  github:
+    owner: sigilauth
+    name: cli-device
+  prerelease: auto
+  name_template: '{{.Tag}}'
+  header: |
+    ## Sigil CLI Device {{ .Tag }}
+
+    PKI-based authentication testing device for Sigil Auth.
+  footer: |
+    ## Installation
+
+    ### Linux Package Managers
+
+    **Debian/Ubuntu (.deb):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device_{{ .Version }}_linux_amd64.deb
+    sudo dpkg -i sigil-device_{{ .Version }}_linux_amd64.deb
+    ```
+
+    **Fedora/RHEL (.rpm):**
+    ```bash
+    sudo rpm -i https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device-{{ .Version }}-1.x86_64.rpm
+    ```
+
+    **Arch Linux (AUR):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device-{{ .Version }}-1-x86_64.pkg.tar.zst
+    sudo pacman -U sigil-device-{{ .Version }}-1-x86_64.pkg.tar.zst
+    ```
+
+    **Alpine (.apk):**
+    ```bash
+    curl -LO https://github.com/sigilauth/cli-device/releases/download/{{ .Tag }}/sigil-device_{{ .Version }}_linux_amd64.apk
+    sudo apk add --allow-untrusted sigil-device_{{ .Version }}_linux_amd64.apk
+    ```
+
+    ### Homebrew (macOS / Linux)
+
+    ```bash
+    brew install sigilauth/tap/sigil-device
+    ```
+
+    ### Manual Download
+
+    **Linux/macOS:**
+    ```bash
+    tar -xzf sigil-device_{{ .Version }}_linux_amd64.tar.gz
+    sudo mv sigil-device /usr/local/bin/
+    ```
+
+    **Windows:**
+    ```powershell
+    unzip sigil-device_{{ .Version }}_windows_amd64.zip
+    .\sigil-device.exe --version
+    ```
+
+    ### Go Install
+
+    ```bash
+    go install github.com/sigilauth/cli-device/cmd/sigil-device@{{ .Tag }}
+    ```
+  mode: replace
+builds:
+  - id: sigil-device
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    go386:
+      - sse2
+    goarm:
+      - "6"
+    goarm64:
+      - v8.0
+    gomips:
+      - hardfloat
+    goppc64:
+      - power8
+    goriscv64:
+      - rva20u64
+    targets:
+      - linux_amd64_v1
+      - linux_arm64_v8.0
+      - darwin_amd64_v1
+      - darwin_arm64_v8.0
+      - windows_amd64_v1
+      - windows_arm64_v8.0
+    dir: .
+    main: ./cmd/sigil-device
+    binary: sigil-device
+    builder: go
+    tool: go
+    command: build
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+    env:
+      - CGO_ENABLED=0
+archives:
+  - id: sigil-device
+    builds_info:
+      mode: 493
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+        format: zip
+    files:
+      - src: LICENSE
+      - src: README.md
+      - src: CONTRIBUTING.md
+      - src: docs/man/sigil-device.1
+      - src: completions/*
+      - src: packaging/systemd/sigil-device.service
+    format: tar.gz
+nfpms:
+  - file_name_template: '{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+    package_name: sigil-device
+    contents:
+      - src: LICENSE
+        dst: /usr/share/doc/sigil-device/LICENSE
+      - src: README.md
+        dst: /usr/share/doc/sigil-device/README.md
+      - src: packaging/systemd/sigil-device.service
+        dst: /usr/lib/systemd/user/sigil-device.service
+      - src: docs/man/sigil-device.1
+        dst: /usr/share/man/man1/sigil-device.1
+      - src: completions/sigil-device.bash
+        dst: /usr/share/bash-completion/completions/sigil-device
+      - src: completions/sigil-device.zsh
+        dst: /usr/share/zsh/site-functions/_sigil-device
+      - src: completions/sigil-device.fish
+        dst: /usr/share/fish/vendor_completions.d/sigil-device.fish
+    id: sigil-device
+    formats:
+      - deb
+      - rpm
+      - apk
+      - archlinux
+    vendor: Wagmi Labs Pty Ltd
+    homepage: https://sigilauth.com
+    maintainer: Sigil Auth <noreply@sigilauth.com>
+    description: |
+      PKI-based authentication CLI device for Sigil Auth.
+      Hardware-backed ECDSA keys, push notifications, multi-party authorization.
+    license: AGPL-3.0
+    bindir: /usr/bin
+    libdirs:
+      header: /usr/include
+      carchive: /usr/lib
+      cshared: /usr/lib
+srpm:
+  nfpmrpm: {}
+  package_name: cli-device
+  file_name_template: '{{ .PackageName }}-{{ .Version }}.src.rpm'
+  bins:
+    cli-device: '%{goipath}'
+snapshot:
+  version_template: '{{ .Version }}-SNAPSHOT-{{ .ShortCommit }}'
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+  algorithm: sha256
+docker_digest:
+  name_template: digests.txt
+changelog:
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+  sort: asc
+  format: '{{ .SHA }} {{ .Message }}'
+dist: dist
+env_files:
+  github_token: ~/.config/goreleaser/github_token
+  gitlab_token: ~/.config/goreleaser/gitlab_token
+  gitea_token: ~/.config/goreleaser/gitea_token
+before:
+  hooks:
+    - go mod tidy
+    - go test -race -timeout 60s ./...
+source:
+  name_template: '{{ .ProjectName }}-{{ .Version }}'
+  format: tar.gz
+gomod:
+  gobinary: go
+announce:
+  twitter:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+  mastodon:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    server: ""
+  reddit:
+    title_template: '{{ .ProjectName }} {{ .Tag }} is out!'
+    url_template: '{{ .ReleaseURL }}'
+  slack:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    username: GoReleaser
+  discord:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    author: GoReleaser
+    color: "3888754"
+    icon_url: https://goreleaser.com/static/avatar.png
+  teams:
+    title_template: '{{ .ProjectName }} {{ .Tag }} is out!'
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    color: '#2D313E'
+    icon_url: https://goreleaser.com/static/avatar.png
+  smtp:
+    subject_template: '{{ .ProjectName }} {{ .Tag }} is out!'
+    body_template: 'You can view details from: {{ .ReleaseURL }}'
+  mattermost:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    title_template: '{{ .ProjectName }} {{ .Tag }} is out!'
+    color: '#2D313E'
+    username: GoReleaser
+  linkedin:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+  telegram:
+    message_template: '{{ print .ProjectName " " .Tag " is out! Check it out at " .ReleaseURL | mdv2escape }}'
+    parse_mode: MarkdownV2
+  webhook:
+    message_template: '{ "message": "{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}"}'
+    content_type: application/json; charset=utf-8
+    expected_status_codes:
+      - 200
+      - 201
+      - 202
+      - 204
+  opencollective:
+    title_template: '{{ .Tag }}'
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out!<br/>Check it out at <a href="{{ .ReleaseURL }}">{{ .ReleaseURL }}</a>'
+  bluesky:
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+  discourse:
+    title_template: '{{ .ProjectName }} {{ .Tag }} is out!'
+    message_template: '{{ .ProjectName }} {{ .Tag }} is out! Check it out at {{ .ReleaseURL }}'
+    username: system
+git:
+  tag_sort: -version:refname
+mcp:
+  name: ""
+  title: ""
+  auth:
+    type: none
+retry:
+  attempts: 10
+  delay: 10s
+  max_delay: 5m0s
+github_urls:
+  download: https://github.com
+gitlab_urls:
+  download: https://gitlab.com
+brews:
+  - name: cli-device
+    repository:
+      owner: sigilauth
+      name: homebrew-tap
+      token: '{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}'
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    commit_msg_template: Brew formula update for {{ .ProjectName }} version {{ .Tag }}
+    directory: Formula
+    install: |
+      bin.install "sigil-device"
+      man1.install "docs/man/sigil-device.1"
+      bash_completion.install "completions/sigil-device.bash" => "sigil-device"
+      zsh_completion.install "completions/sigil-device.zsh" => "_sigil-device"
+      fish_completion.install "completions/sigil-device.fish"
+    test: |
+      system "#{bin}/sigil-device", "--version"
+    description: PKI-based authentication CLI device for Sigil Auth
+    homepage: https://sigilauth.com
+    license: AGPL-3.0
+    goarm: "6"
+    goamd64: v1
